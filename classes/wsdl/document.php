@@ -81,7 +81,7 @@ class Wsdl_Document {
 
                 switch ($name) {
                     case 'param':
-                        preg_match('/^(\S+)\s+\$(\S+)\s+(.*)$/', $text, $matches);
+                        preg_match('/^(\S+)\s+\$(\S+)(?:\s+(.*))?$/', $text, $matches);
 
                         // Add the tag
                         switch ($matches[1]) {
@@ -265,7 +265,7 @@ class Wsdl_Document {
         $doc = new DomDocument;
 
         // find xml schema
-        $xmlschema = Kohana::find_file('views', 'schema.xsd');
+        $xmlschema = Kohana::find_file('views', 'schema', 'xsd');
 
         // Load the xml document
         $doc->loadXML($this->wsdl->asXML());

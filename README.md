@@ -45,11 +45,11 @@ Example usage
         'Sample_Service' => 'http://example.com/server',
     ));
 
-    $wsdl->save('document.wsdl')); // Result: bool
+    $wsdl->save('document.wsdl'); // Result: bool
 
-    $wsdl->get_document());        // Result: string - WSDL document
+    $wsdl->get_document();        // Result: string - WSDL document
 
-    $wsdl->validate();             // Result: bool
+    $wsdl->validate();            // Result: bool
 
 
 The resulting WSDL document
