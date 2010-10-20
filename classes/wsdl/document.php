@@ -156,7 +156,7 @@ class Wsdl_Document {
             foreach ($class->getMethods() as $method) {
 
                 // Include only public class
-                if ($method->isPublic()) {
+                if ($method->isPublic() AND substr($method->getName(), 0, 2) !== '__') {
 
                     // Parse PHPDoc
                     $this->items[$class->getName()][$method->getName()] = $this->parse_comment($method->getDocComment());
