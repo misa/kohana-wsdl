@@ -51,19 +51,29 @@ class Wsdl_Document {
     /**
      * Parse a PHPDoc comment for all parameters
      *
-     * @param string $comment PHPDoc comment
+     * @param ReflectionMethod $method Method object
      * @return array Parsed comments
      */
-    private function parse_comment($comment) {
+    private function parse_info($method) {
+
+        // Tag content
+        $tags = array();
+
+        foreach ($method->getParameters() as $parameter) {
+
+            // insert default type
+            $tags['param'][$parameter->name] = array(
+                'type' => 'xsd:anyType'
+            );
+        }
+
+        $comment = $method->getDocComment();
 
         // Normalize all new lines to \n
         $comment = str_replace(array("\r\n", "\n"), "\n", $comment);
 
         // Remove the PHPDoc open/close tags and split
         $comment = array_slice(explode("\n", $comment), 1, -1);
-
-        // Tag content
-        $tags = array();
 
         foreach ($comment as $i => $line) {
 
@@ -93,6 +103,9 @@ class Wsdl_Document {
                             case 'integer':
                                 $type = 'xsd:int';
                                 break;
+                            case 'mixed':
+                                $type = 'xsd:anyType';
+                                break;
                             case 'array':
                                 $type = 'soapenc:Array';
                                 break;
@@ -107,6 +120,8 @@ class Wsdl_Document {
                             'type' => $type,
                             'doc' => isset($matches[3]) ? $matches[3] : NULL,
                         );
+
+
 
                         break;
                     case 'return':
@@ -130,8 +145,13 @@ class Wsdl_Document {
         // Concat the comment lines back to a block of text
         $tags['doc'] = trim(implode("\n", $comment));
 
+        if (isset($tags['doc']) AND $tags['doc'] === '') {
+            unset($tags['doc']);
+        }
+
         return $tags;
     }
+
 
     /**
      * Find all methods and parse their comments
@@ -159,7 +179,7 @@ class Wsdl_Document {
                 if ($method->isPublic() AND substr($method->getName(), 0, 2) !== '__') {
 
                     // Parse PHPDoc
-                    $this->items[$class->getName()][$method->getName()] = $this->parse_comment($method->getDocComment());
+                    $this->items[$class->getName()][$method->getName()] = $this->parse_info($method);
                 }
             }
         }
@@ -296,11 +316,14 @@ class Wsdl_Document {
                     $message->addAttribute('name', $method);
 
                     // Create params
-                    foreach ($params['param'] as $param_name => $param) {
+                    if (isset($params['param'])) {
 
-                        $part = $message->addChild('part');
-                        $part->addAttribute('name', $param_name);
-                        $part->addAttribute('type', $this->items[$class][$method]['param'][$param_name]['type']);
+                        foreach ($params['param'] as $param_name => $param) {
+
+                            $part = $message->addChild('part');
+                            $part->addAttribute('name', $param_name);
+                            $part->addAttribute('type', $this->items[$class][$method]['param'][$param_name]['type']);
+                        }
                     }
 
                     // Create response message only if PHPDoc comment @return exists
@@ -335,7 +358,9 @@ class Wsdl_Document {
                 $operation->addAttribute('name', $method);
 
                 // Add a documentation
-                $documentation = $operation->addChild('documentation', $params['doc']);
+                if (isset($params['doc'])) {
+                    $documentation = $operation->addChild('documentation', $params['doc']);
+                }
 
                 $input = $operation->addChild('input');
                 $input->addAttribute('message', 'typens:'.$method);
